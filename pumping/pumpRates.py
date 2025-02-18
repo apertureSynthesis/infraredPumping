@@ -51,5 +51,24 @@ class pumpRates(object):
         self.tbl['local_upper_quanta']=self.tbl['local_upper_quanta'].apply(lambda x: x.decode("utf-8"))
 
         #Import the LAMDA data
-        self.collrates, self.radtransitions, self.enlevels = Lamda.query(mol=lamdamol)
-        self.levels = self.enlevels.to_pandas()
+        collrates, radtransitions, enlevels = Lamda.query(mol=lamdamol)
+        self.levels = enlevels.to_pandas()
+
+        #Make a dictionary to hold all of the level rate summations
+        gratesum={} 
+
+        #Select the upper quantum levels that we want to work with
+        vups = self.tbl['global_upper_quanta'].unique().tolist()
+
+        vups.remove(groundState)
+
+        try:
+            vups.remove('               ')
+        except:
+            pass
+
+        try:
+            vups = includeLevels
+        except:
+            pass
+
