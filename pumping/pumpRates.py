@@ -3,7 +3,6 @@
 from __future__ import print_function
 
 import numpy as np
-from astroquery.lamda import Lamda
 from astroquery.hitran import Hitran
 from radis.io import fetch_geisa
 import astropy.units as u
@@ -13,7 +12,9 @@ import itertools
 import os
 from infraredPumping.utils.molParams import *
 from infraredPumping.utils.lamdaRoutines import *
-from infraredPumping.utils.quantumDicts import *
+from infraredPumping.utils.quantumNumbers import *
+
+pd.options.mode.chained_assignment = None
 
 class pumpRates(object):
     """
@@ -50,8 +51,10 @@ class pumpRates(object):
         self.tbl['local_lower_quanta']=self.tbl['local_lower_quanta'].apply(lambda x: x.decode("utf-8"))
         self.tbl['local_upper_quanta']=self.tbl['local_upper_quanta'].apply(lambda x: x.decode("utf-8"))
 
+        #Map the HITRAN local quanta to LAMDA format
+
         #Import the LAMDA data
-        collrates, radtransitions, enlevels = Lamda.query(mol=lamdamol)
+        collrates, radtransitions, enlevels = query_lamda(mol=lamdamol)
         self.levels = enlevels.to_pandas()
 
         #Make a dictionary to hold all of the level rate summations

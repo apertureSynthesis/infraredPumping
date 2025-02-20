@@ -199,3 +199,44 @@ def write_lamda_datafile(filename, tables):
                                          v.meta['ntemp'],
                                          temperatures))
             v.write(f, format='ascii.no_header')
+
+def get_lamda_file(lamdamol):
+    """
+    Function to retrieve the latest line of molecular line files from the LAMDA datbase
+    """
+    from bs4 import BeautifulSoup
+    import requests
+
+    #Location of the LAMDA data files
+    main_url = 'http://home.strw.leidenuniv.nl/~moldata/'
+
+    #Get all the possible files
+    soup = BeautifulSoup(requests.get(main_url).content, "html.parser")
+
+    #Create a lookup dictionary from the links
+    mol_dict = dict([(i,j) for i,j in zip((link["href"].split('.')[0] for link in soup.select('a[href*=".dat"]')), (main_url+link["href"] for link in soup.select('a[href*=".dat"]')))])
+
+    #Download the requested file and save it locally
+    response = requests.get(mol_dict[lamdamol])
+
+    with open(lamdamol+".dat", "w") as f:
+        f.write(response.text)
+
+
+def query_lamda(lamdamol):
+    import os
+    """
+    Query a file from the LAMDA database, parse it, and put it into a dataframe
+    """
+
+    #Check if the LAMDA file has already been retrieved
+    pwd = os.getcwd()
+    if not os.path.exists(pwd+'/'+lamdamol+'.dat'):
+        get_lamda_file(lamdamol)
+    
+    f = open(pwd+'/'+lamdamol+'.dat')
+    datafile = [s.strip() for s in f]
+    collrates, radtransitions, enlevels = parse_lamda_lines(datafile)
+
+    return collrates, radtransitions, enlevels
+

@@ -1,3 +1,3 @@
 from . import molParams
-from . import quantumDicts
+from . import quantumNumbers
 from . import lamdaRoutines
