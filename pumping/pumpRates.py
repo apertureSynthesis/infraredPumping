@@ -10,9 +10,9 @@ import pandas as pd
 from scipy import constants
 import itertools
 import os
-from infraredPumping.utils.molParams import *
-from infraredPumping.utils.lamdaRoutines import *
-from infraredPumping.utils.quantumNumbers import *
+from infraredPumping.utils import molParams
+from infraredPumping.utils import lamdaRoutines
+from infraredPumping.utils import quantumNumbers
 
 pd.options.mode.chained_assignment = None
 
@@ -32,7 +32,7 @@ class pumpRates(object):
         self.levels = levels
 
         #Get pertinent information about the molecule
-        lamdamol, id, iso, includeLevels, groundState, species = getMolParams(self.mol,self.levels)
+        lamdamol, id, iso, includeLevels, groundState, species = molParams.getMolParams(self.mol,self.levels)
     
         #Table of all transitions from HITRAN between the specified min and max frequencies
         #Query GEISA for HNC, otherwise query HITRAN
@@ -52,9 +52,16 @@ class pumpRates(object):
         self.tbl['local_upper_quanta']=self.tbl['local_upper_quanta'].apply(lambda x: x.decode("utf-8"))
 
         #Map the HITRAN local quanta to LAMDA format
+        self.tbl.loc[:,'local_lower_quanta_lamda'] = self.tbl['local_lower_quanta'].apply(quantumNumbers.hitran_to_lamda, args=(self.mol,'lower'))
+        self.tbl.loc[:,'local_upper_quanta_lamda'] = self.tbl['local_upper_quanta'].apply(quantumNumbers.hitran_to_lamda,args=(self,mol,'upper'))
+
+        #Calculate statistical weights for HNC, as they aren't included in GEISA
+        if self.mol == 'HNC':
+            self.tbl.loc[:,'gp'] = self.tbl['local_uppr_quanta_lamda'].apply(quantumNumbers.generate_statistical_weights)
+            self.tbl.loc[:,'gpp'] = self.tbl['local_lower_quanta_lamda'].apply(quantumNumbers.generate_statistical_weights)
 
         #Import the LAMDA data
-        collrates, radtransitions, enlevels = query_lamda(mol=lamdamol)
+        collrates, radtransitions, enlevels = lamdaRoutines.query_lamda(mol=lamdamol)
         self.levels = enlevels.to_pandas()
 
         #Make a dictionary to hold all of the level rate summations

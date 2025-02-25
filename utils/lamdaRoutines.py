@@ -58,7 +58,8 @@ def parse_lamda_lines(data):
             continue
         if collider is None:
             collider = int(line[0])
-            collname = collider_ids[collider]
+            collider_id = collider_ids()
+            collname = collider_id[collider]
             collrates[collider] = []
             meta_coll[collname] = {'collider': collname,
                                    'collider_id': collider}
@@ -208,14 +209,14 @@ def get_lamda_file(lamdamol):
     import requests
 
     #Location of the LAMDA data files
-    main_url = 'http://home.strw.leidenuniv.nl/~moldata/'
+    main_url = 'http://home.strw.leidenuniv.nl/~moldata/datafiles/'
 
     #Get all the possible files
     soup = BeautifulSoup(requests.get(main_url).content, "html.parser")
 
     #Create a lookup dictionary from the links
     mol_dict = dict([(i,j) for i,j in zip((link["href"].split('.')[0] for link in soup.select('a[href*=".dat"]')), (main_url+link["href"] for link in soup.select('a[href*=".dat"]')))])
-
+    
     #Download the requested file and save it locally
     response = requests.get(mol_dict[lamdamol])
 
@@ -234,7 +235,7 @@ def query_lamda(lamdamol):
     if not os.path.exists(pwd+'/'+lamdamol+'.dat'):
         get_lamda_file(lamdamol)
     
-    f = open(pwd+'/'+lamdamol+'.dat')
+    f = open(pwd+'/'+lamdamol+'.dat', 'r')
     datafile = [s.strip() for s in f]
     collrates, radtransitions, enlevels = parse_lamda_lines(datafile)
 

@@ -118,13 +118,16 @@ def select_species(df,mol):
 
     return df
 
-def hitran_to_lamda(level,mol):
+def hitran_to_lamda(level,mol,levelType='lower'):
     """
     Map the HITRAN local quanta to the LAMDA local quanta format
     """
     import re
 
     if mol in ['aCH3OH','eCH3OH']:
+        """
+        LAMDA format is J_(+/-)K, where the +/- is determined based on the spin species. HITRAN format is J K Spin.
+        """
         m = re.match('\s*(\d{1,2})\s*(\d{1,2})\s*([AE])([+-12])\s*',level)
         if m.group(4) == '-':
             #quanta = m.group(1).rjust(2)+m.group(2)+m.group(3).rjust(2)+m.group(4)+'  -1     '
@@ -138,15 +141,58 @@ def hitran_to_lamda(level,mol):
             quanta = m.group(1).rjust(2)+'_'+m.group(2)
 
     elif mol in ['oH2O','pH2O','oH2CO','pH2CO']:
+        """
+        LAMDA format is J_Ka_Kc, HITRAN format is J Ka Kc
+        """
         m = re.match('\s*(\d{1,2})\s*(\d{1,2})\s*(\d{1,2})\s*',level)
         quanta = m.group(1)+'_'+m.group(2)+'_'+m.group(3)
 
     elif mol in ['oNH3','pNH3']:
+        """
+        LAMDA format is J_K_S, where S is 0 if A or E state does not change and 1 if it does. HITRAN format is J K S.
+        """
         m=re.match('(\d{1,2})\s{1,2}(\d{1,2}) ([as]) ([AE][12].)([AE][12].)',level)
         if m.group(4) == m.group(5):
             quanta = '{:02d}_{:02d}_00'.format(int(m.group(1)),int(m.group(2)))
         else:
-            quanta = '{:02d}_{:02d}_01'.format(int(s.group(1)),int(s.group(2)))
+            quanta = '{:02d}_{:02d}_01'.format(int(m.group(1)),int(m.group(2)))
+
+    elif mol in ['HCN', 'CO', 'CS', 'HNC']:
+        """
+        LAMDA format is simply J. HITRAN does not populate the upper quantum numbers at all, but lists the lower quantum numbers with P, Q, R notation.
+        """
+        if levelType == 'lower':
+            if 'e' in level.split()[1]:
+                quanta = level.split()[1].strip('e')
+            elif 'f' in level.split()[1]:
+                quanta = level.split()[1].strip('f')
+            elif 'F' in level.split()[1]:
+                quanta = level.split()[1].strip('F')
+            elif 'E' in level.split()[1]:
+                quanta = level.split()[1].strip('E')
+            else:
+                quanta = level.split()[1]
+            quanta = str(quanta)
+
+        elif levelType == 'upper':
+            branch = level.split()[0]
+            if 'e' in level.split()[1]:
+                Jlo = level.split()[1].strip('e')
+            elif 'f' in level.split()[1]:
+                Jlo = level.split()[1].strip('f')
+            elif 'F' in level.split()[1]:
+                Jlo = level.split()[1].strip('F')
+            elif 'E' in level.split()[1]:
+                Jlo = level.split()[1].strip('E')
+            else:
+                Jlo = level.split()[1]
+            Jlo = int(Jlo)
+            if branch == 'P':
+                quanta = str(abs(Jlo - 1))
+            elif branch == 'R':
+                quanta = str(Jlo + 1)
+            elif branch == 'Q':
+                quanta = str(Jlo)
     
     return quanta
 
