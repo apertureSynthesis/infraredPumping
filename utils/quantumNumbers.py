@@ -20,46 +20,34 @@ def spin_to_int(level,mol):
             quanta = m.group(1).rjust(2)+'_'+m.group(2)
     return quanta
 
-def generate_upper_quanta(level):
+def generate_upper_quanta(lower,upper,mol):
     """
     Generate upper quanta for linear molecules in HITRAN
     """
-    branch = level.split()[0]
-    if 'e' in level.split()[1]:
-        Jlo = level.split()[1].strip('e')
-    elif 'f' in level.split()[1]:
-        Jlo = level.split()[1].strip('f')
-    elif 'F' in level.split()[1]:
-        Jlo = level.split()[1].strip('F')
-    elif 'E' in level.split()[1]:
-        Jlo = level.split()[1].strip('E')
+    if mol in ['HCN', 'CO', 'CS', 'HNC']:
+        branch = lower.split()[0]
+        Jlo = lower.split()[1]
+        Jlo = int(Jlo)
+        if branch == 'P':
+            Jup = str(abs(Jlo - 1))
+        elif branch == 'R':
+            Jup = str(Jlo + 1)
+        elif branch == 'Q':
+            Jup = str(Jlo)
+        return Jup
     else:
-        Jlo = level.split()[1]
-    Jlo = int(Jlo)
-    if branch == 'P':
-        Jup = str(abs(Jlo - 1))
-    elif branch == 'R':
-        Jup = str(Jlo + 1)
-    elif branch == 'Q':
-        Jup = str(Jlo)
-    return Jup
+        return upper
 
-def cleanup_lower_quanta(level):
+def cleanup_lower_quanta(level,mol):
     """
     Reformat lower quanta for linear molecules in HITRAN
     """
-    if 'e' in level.split()[1]:
-        Jlo = level.split()[1].strip('e')
-    elif 'f' in level.split()[1]:
-        Jlo = level.split()[1].strip('f')
-    elif 'F' in level.split()[1]:
-        Jlo = level.split()[1].strip('F')
-    elif 'E' in level.split()[1]:
-        Jlo = level.split()[1].strip('E')
+    import re
+    if mol in ['HCN', 'CO', 'CS', 'HNC']:
+        Jlo = str(re.sub('([EFef])',' ',level))
+        return Jlo
     else:
-        Jlo = level.split()[1]
-    Jlo = str(Jlo)
-    return Jlo
+        return level
 
 def generate_statistical_weights(level):
     """
@@ -118,83 +106,74 @@ def select_species(df,mol):
 
     return df
 
-def hitran_to_lamda(level,mol,levelType='lower'):
+def hitran_to_lamda(lower,upper,mol):
     """
     Map the HITRAN local quanta to the LAMDA local quanta format
     """
     import re
 
+    levels = []
+
     if mol in ['aCH3OH','eCH3OH']:
         """
         LAMDA format is J_(+/-)K, where the +/- is determined based on the spin species. HITRAN format is J K Spin.
         """
-        m = re.match('\s*(\d{1,2})\s*(\d{1,2})\s*([AE])([+-12])\s*',level)
-        if m.group(4) == '-':
-            #quanta = m.group(1).rjust(2)+m.group(2)+m.group(3).rjust(2)+m.group(4)+'  -1     '
-            quanta = m.group(1).rjust(2)+'_-'+m.group(2)
-        elif m.group(4) == '+':
-            quanta = m.group(1).rjust(2)+'_'+m.group(2)
+        for level in [lower,upper]:
+            m = re.match('\s*(\d{1,2})\s*(\d{1,2})\s*([AE])([+-12])\s*',level)
+            if m.group(4) == '-':
+                #quanta = m.group(1).rjust(2)+m.group(2)+m.group(3).rjust(2)+m.group(4)+'  -1     '
+                quanta = m.group(1).rjust(2)+'_-'+m.group(2)
+            elif m.group(4) == '+':
+                quanta = m.group(1).rjust(2)+'_'+m.group(2)
 
-        elif m.group(4) == '2':
-            quanta = m.group(1).rjust(2)+'_-'+m.group(2)
-        elif m.group(4) == '1':
-            quanta = m.group(1).rjust(2)+'_'+m.group(2)
+            elif m.group(4) == '2':
+                quanta = m.group(1).rjust(2)+'_-'+m.group(2)
+            elif m.group(4) == '1':
+                quanta = m.group(1).rjust(2)+'_'+m.group(2)
+            levels.append(quanta)
 
     elif mol in ['oH2O','pH2O','oH2CO','pH2CO']:
         """
         LAMDA format is J_Ka_Kc, HITRAN format is J Ka Kc
         """
-        m = re.match('\s*(\d{1,2})\s*(\d{1,2})\s*(\d{1,2})\s*',level)
-        quanta = m.group(1)+'_'+m.group(2)+'_'+m.group(3)
+        for level in [lower,upper]:
+            m = re.match('\s*(\d{1,2})\s*(\d{1,2})\s*(\d{1,2})\s*',level)
+            quanta = m.group(1)+'_'+m.group(2)+'_'+m.group(3)
+            levels.append(quanta)
 
     elif mol in ['oNH3','pNH3']:
         """
         LAMDA format is J_K_S, where S is 0 if A or E state does not change and 1 if it does. HITRAN format is J K S.
         """
-        m=re.match('(\d{1,2})\s{1,2}(\d{1,2}) ([as]) ([AE][12].)([AE][12].)',level)
-        if m.group(4) == m.group(5):
-            quanta = '{:02d}_{:02d}_00'.format(int(m.group(1)),int(m.group(2)))
-        else:
-            quanta = '{:02d}_{:02d}_01'.format(int(m.group(1)),int(m.group(2)))
+        for level in [lower,upper]:
+            m=re.match('(\d{1,2})\s{1,2}(\d{1,2}) ([as]) ([AE][12].)([AE][12].)',level)
+            if m.group(4) == m.group(5):
+                quanta = '{:02d}_{:02d}_00'.format(int(m.group(1)),int(m.group(2)))
+            else:
+                quanta = '{:02d}_{:02d}_01'.format(int(m.group(1)),int(m.group(2)))
+            levels.append(quanta)
 
     elif mol in ['HCN', 'CO', 'CS', 'HNC']:
         """
         LAMDA format is simply J. HITRAN does not populate the upper quantum numbers at all, but lists the lower quantum numbers with P, Q, R notation.
         """
-        if levelType == 'lower':
-            if 'e' in level.split()[1]:
-                quanta = level.split()[1].strip('e')
-            elif 'f' in level.split()[1]:
-                quanta = level.split()[1].strip('f')
-            elif 'F' in level.split()[1]:
-                quanta = level.split()[1].strip('F')
-            elif 'E' in level.split()[1]:
-                quanta = level.split()[1].strip('E')
-            else:
-                quanta = level.split()[1]
-            quanta = str(quanta)
+        
+        lowerQuanta = str(re.sub('([EFef])',' ',lower))
+        cleanQuanta = str(re.sub('([PRQef]|1$)', ' ',lower,))
+        levels.append(cleanQuanta)
 
-        elif levelType == 'upper':
-            branch = level.split()[0]
-            if 'e' in level.split()[1]:
-                Jlo = level.split()[1].strip('e')
-            elif 'f' in level.split()[1]:
-                Jlo = level.split()[1].strip('f')
-            elif 'F' in level.split()[1]:
-                Jlo = level.split()[1].strip('F')
-            elif 'E' in level.split()[1]:
-                Jlo = level.split()[1].strip('E')
-            else:
-                Jlo = level.split()[1]
-            Jlo = int(Jlo)
-            if branch == 'P':
-                quanta = str(abs(Jlo - 1))
-            elif branch == 'R':
-                quanta = str(Jlo + 1)
-            elif branch == 'Q':
-                quanta = str(Jlo)
+        branch = lowerQuanta.split()[0]
+        Jlo = lowerQuanta.split()[1]
+        Jlo = int(Jlo)
+        if branch == 'P':
+            upperQuanta = str(abs(Jlo - 1))
+        elif branch == 'R':
+            upperQuanta = str(Jlo + 1)
+        elif branch == 'Q':
+            upperQuanta = str(Jlo)
+        levels.append(upperQuanta)
     
-    return quanta
+    return levels[0], levels[1]
 
     
 

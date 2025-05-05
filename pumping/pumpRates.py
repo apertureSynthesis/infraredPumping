@@ -52,8 +52,7 @@ class pumpRates(object):
         self.tbl['local_upper_quanta']=self.tbl['local_upper_quanta'].apply(lambda x: x.decode("utf-8"))
 
         #Map the HITRAN local quanta to LAMDA format
-        self.tbl.loc[:,'local_lower_quanta_lamda'] = self.tbl['local_lower_quanta'].apply(quantumNumbers.hitran_to_lamda, args=(self.mol,'lower'))
-        self.tbl.loc[:,'local_upper_quanta_lamda'] = self.tbl['local_upper_quanta'].apply(quantumNumbers.hitran_to_lamda,args=(self,mol,'upper'))
+        self.tbl[['local_lower_quanta_lamda','local_upper_quanta_lamda']] = self.tbl.apply(lambda x: pd.Series(quantumNumbers.hitran_to_lamda(x['local_lower_quanta'],x['local_upper_quanta'],self.mol)), axis=1)
 
         #Calculate statistical weights for HNC, as they aren't included in GEISA
         if self.mol == 'HNC':
@@ -61,7 +60,7 @@ class pumpRates(object):
             self.tbl.loc[:,'gpp'] = self.tbl['local_lower_quanta_lamda'].apply(quantumNumbers.generate_statistical_weights)
 
         #Import the LAMDA data
-        collrates, radtransitions, enlevels = lamdaRoutines.query_lamda(mol=lamdamol)
+        collrates, radtransitions, enlevels = lamdaRoutines.query_lamda(lamdamol=lamdamol)
         self.levels = enlevels.to_pandas()
 
         #Make a dictionary to hold all of the level rate summations

@@ -1,4 +1,4 @@
-def collider_ids():
+def get_collider_ids():
     """
     List of possible collisional partner IDs in a LAMDA datafile
     """
@@ -18,6 +18,8 @@ def parse_lamda_lines(data):
 
     (non-pythonic!  more like, fortranic)
     """
+    from astropy import log
+    from astropy import table
 
     meta_rad = {}
     meta_mol = {}
@@ -58,8 +60,8 @@ def parse_lamda_lines(data):
             continue
         if collider is None:
             collider = int(line[0])
-            collider_id = collider_ids()
-            collname = collider_id[collider]
+            collider_ids = get_collider_ids()
+            collname = collider_ids[collider]
             collrates[collider] = []
             meta_coll[collname] = {'collider': collname,
                                    'collider_id': collider}
