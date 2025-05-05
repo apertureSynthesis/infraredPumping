@@ -51,6 +51,9 @@ class pumpRates(object):
         self.tbl['local_lower_quanta']=self.tbl['local_lower_quanta'].apply(lambda x: x.decode("utf-8"))
         self.tbl['local_upper_quanta']=self.tbl['local_upper_quanta'].apply(lambda x: x.decode("utf-8"))
 
+        #Split off the spin species (if applicable) to save time
+        self.tbl = quantumNumbers.select_species(self.tbl, self.mol)
+
         #Map the HITRAN local quanta to LAMDA format
         self.tbl[['local_lower_quanta_lamda','local_upper_quanta_lamda']] = self.tbl.apply(lambda x: pd.Series(quantumNumbers.hitran_to_lamda(x['local_lower_quanta'],x['local_upper_quanta'],self.mol)), axis=1)
 

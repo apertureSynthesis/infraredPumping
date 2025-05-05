@@ -103,6 +103,9 @@ def select_species(df,mol):
             df = df[df['is-ortho']]
         elif (mol == 'pNH3'):
             df = df[~df['is-ortho']]
+    
+    else:
+        df = df
 
     return df
 
@@ -119,6 +122,7 @@ def hitran_to_lamda(lower,upper,mol):
         LAMDA format is J_(+/-)K, where the +/- is determined based on the spin species. HITRAN format is J K Spin.
         """
         for level in [lower,upper]:
+            print(level)
             m = re.match('\s*(\d{1,2})\s*(\d{1,2})\s*([AE])([+-12])\s*',level)
             if m.group(4) == '-':
                 #quanta = m.group(1).rjust(2)+m.group(2)+m.group(3).rjust(2)+m.group(4)+'  -1     '
@@ -159,19 +163,19 @@ def hitran_to_lamda(lower,upper,mol):
         """
         
         lowerQuanta = str(re.sub('([EFef])',' ',lower))
-        cleanQuanta = str(re.sub('([PRQef]|1$)', ' ',lower,))
-        levels.append(cleanQuanta)
+        cleanQuanta = int(re.sub('([PRQef]|1$)', ' ',lower,))
+        levels.append(f"{cleanQuanta:02d}")
 
         branch = lowerQuanta.split()[0]
         Jlo = lowerQuanta.split()[1]
         Jlo = int(Jlo)
         if branch == 'P':
-            upperQuanta = str(abs(Jlo - 1))
+            upperQuanta = abs(Jlo - 1)
         elif branch == 'R':
-            upperQuanta = str(Jlo + 1)
+            upperQuanta = abs(Jlo + 1)
         elif branch == 'Q':
-            upperQuanta = str(Jlo)
-        levels.append(upperQuanta)
+            upperQuanta = abs(Jlo)
+        levels.append(f"{upperQuanta:02d}")
     
     return levels[0], levels[1]
 
