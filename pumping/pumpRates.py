@@ -4,6 +4,7 @@ from __future__ import print_function
 
 import numpy as np
 from astroquery.hitran import Hitran
+from astroquery.linelists.cdms import CDMS
 from radis.io import fetch_geisa
 import astropy.units as u
 import pandas as pd
@@ -54,8 +55,11 @@ class pumpRates(object):
         #Split off the spin species (if applicable) to save time
         self.tbl = quantumNumbers.select_species(self.tbl, self.mol)
 
-        #Map the HITRAN local quanta to LAMDA format
-        self.tbl[['local_lower_quanta_lamda','local_upper_quanta_lamda']] = self.tbl.apply(lambda x: pd.Series(quantumNumbers.hitran_to_lamda(x['local_lower_quanta'],x['local_upper_quanta'],self.mol)), axis=1)
+        #Generate upper quanta for linear molecules if necessary
+        self.tbl['local_lower_quanta_clean','local_upper_quanta_clean'] = self.tbl.apply(lambda x: pd.Series(quantumNumbers.generate_linear_quanta(x['local_lower_quanta'],x['local_upper_quanta'],self.mol), axis=1))
+
+        #Map the HITRAN local quanta to CDMS format for mapping between the two
+        self.tbl[['local_lower_quanta_cdms','local_upper_quanta_cdms']] = self.tbl.apply(lambda x: pd.Series(quantumNumbers.hitran_to_cdms(x['local_lower_quanta'],x['local_upper_quanta'],self.mol)), axis=1)
 
         #Calculate statistical weights for HNC, as they aren't included in GEISA
         if self.mol == 'HNC':

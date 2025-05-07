@@ -1,53 +1,3 @@
-def spin_to_int(level,mol):
-    """ Converts spin species (e.g., A+,A-) to integers (+1,-1).
-        This makes it easy to quantify a change between the two states
-        via multiplication by -1. This is also useful for converting between
-        LAMDA and HITRAN syntax
-
-    """
-    import re
-    if (mol == 'aCH3OH') or (mol == 'eCH3OH'):
-        m = re.match('\s*(\d{1,2})\s*(\d{1,2})\s*([AE])([+-12])\s*',level)
-        if m.group(4) == '-':
-            #quanta = m.group(1).rjust(2)+m.group(2)+m.group(3).rjust(2)+m.group(4)+'  -1     '
-            quanta = m.group(1).rjust(2)+'_-'+m.group(2)
-        elif m.group(4) == '+':
-            quanta = m.group(1).rjust(2)+'_'+m.group(2)
-
-        elif m.group(4) == '2':
-            quanta = m.group(1).rjust(2)+'_-'+m.group(2)
-        elif m.group(4) == '1':
-            quanta = m.group(1).rjust(2)+'_'+m.group(2)
-    return quanta
-
-def generate_upper_quanta(lower,upper,mol):
-    """
-    Generate upper quanta for linear molecules in HITRAN
-    """
-    if mol in ['HCN', 'CO', 'CS', 'HNC']:
-        branch = lower.split()[0]
-        Jlo = lower.split()[1]
-        Jlo = int(Jlo)
-        if branch == 'P':
-            Jup = str(abs(Jlo - 1))
-        elif branch == 'R':
-            Jup = str(Jlo + 1)
-        elif branch == 'Q':
-            Jup = str(Jlo)
-        return Jup
-    else:
-        return upper
-
-def cleanup_lower_quanta(level,mol):
-    """
-    Reformat lower quanta for linear molecules in HITRAN
-    """
-    import re
-    if mol in ['HCN', 'CO', 'CS', 'HNC']:
-        Jlo = str(re.sub('([EFef])',' ',level))
-        return Jlo
-    else:
-        return level
 
 def generate_statistical_weights(level):
     """
@@ -56,6 +6,51 @@ def generate_statistical_weights(level):
     J = int(level)
     g = 6*((2*J)+1)
     return g
+
+def generate_linear_quanta(lower,upper,mol):
+
+    """
+    HITRAN doesn't include upper local quanta for linear molecules.
+    Reformat the lower quanta into a more digestible format and calculate the upper quanta
+    """
+    import re
+    
+    #Dictionary of branch notation for linear molecules
+    branch_dict = {'O': -2, 'P': -1, 'Q': 0, 'R': 1, 'S': 2, 'T': 3}
+
+    
+    if mol in ['HCN', 'CO', 'CS', 'HNC', 'C34S', 'C33S', 'OCS', 'HC3N']:
+        """
+        CDMS format is simply J. HITRAN does not populate the upper quantum numbers at all, but lists the lower quantum numbers with P, Q, R notation.
+        """
+        lo = re.match('\s*([OPSQRT])\s*(\d*)([a-z])(.*)',lower)
+        loBranch = lo.group(1)
+        Jlo = int(loBranch.group(2))
+        Jup = int(Jlo + branch_dict[loBranch])
+
+        lowerQuanta = Jlo
+        upperQuanta = Jup
+
+    elif mol in ['SO']:
+        """
+        CDMS format is N J. HITRAN does not populate the upper quantum numbers at all, but lists the lower quantum numbers with P, Q, R notation.
+        """      
+        lo = re.match('\s*([OPQRST])\s*(\d*)([OPQRST])\s*(\d*)(.*)(.*)',lower)  
+        nBranch = lo.group(1)
+        Nlo = lo.group(2)
+        jBranch = lo.group(3)
+        Jlo = lo.group(4)
+        Nup = int(Nlo + branch_dict[nBranch])
+        Jup = int(Jlo + branch_dict[jBranch])
+
+        lowerQuanta = Nlo+'_'+Jlo
+        upperQuanta = Nup+'_'+Jup
+
+    else:
+        lowerQuanta = lower
+        upperQuanta = upper
+
+    return lowerQuanta, upperQuanta
 
 def generate_ammonia_qns(level):
     import re
@@ -109,6 +104,81 @@ def select_species(df,mol):
 
     return df
 
+def hitran_to_cdms(lower,upper,mol):
+    """
+    Map the HITRAN local quanta to the CDMS local quanta format
+    CDMS format is J, K, v, F1, F2, F3
+    """
+    import re
+    
+    #Dictionary of branch notation for linear molecules
+    branch_dict = {'O': -2, 'P': -1, 'Q': 0, 'R': 1, 'S': 2, 'T': 3}
+
+    
+    if mol in ['HCN', 'CO', 'CS', 'HNC', 'C34S', 'C33S', 'OCS', 'HC3N']:
+        """
+        CDMS format is simply J. HITRAN does not populate the upper quantum numbers at all, but lists the lower quantum numbers with P, Q, R notation.
+        """
+        lo = re.match('\s*([OPSQRT])\s*(\d*)([a-z])(.*)',lower)
+        loBranch = lo.group(1)
+        Jlo = int(loBranch.group(2))
+        Jup = int(Jlo + branch_dict[loBranch])
+
+        lowerQuanta = Jlo
+        upperQuanta = Jup
+
+    elif mol in ['SO']:
+        """
+        CDMS format is N J. HITRAN does not populate the upper quantum numbers at all, but lists the lower quantum numbers with P, Q, R notation.
+        """      
+        lo = re.match('\s*([OPQRST])\s*(\d*)([OPQRST])\s*(\d*)(.*)(.*)',lower)  
+        nBranch = lo.group(1)
+        Nlo = lo.group(2)
+        jBranch = lo.group(3)
+        Jlo = lo.group(4)
+        Nup = int(Nlo + branch_dict[nBranch])
+        Jup = int(Jlo + branch_dict[jBranch])
+
+        lowerQuanta = Nlo+'_'+Jlo
+        upperQuanta = Nup+'_'+Jup
+
+    elif mol in ['H2O','HDO','H2CO','SO2','H2S','HCOOH']:
+        """
+        CDMS format is J Ka Kc, HITRAN format is J Ka Kc
+        """
+        for level in [lower,upper]:
+            lo = re.match('\s*(\d{1,3})\s*(\d{1,3})\s*(\d{1,3})(.{5})(.)',lower)
+            up = re.match('\s*(\d{1,3})\s*(\d{1,3})\s*(\d{1,3})(.{5})(.)',upper)
+
+            lowerQuanta = lo.group(1)+'_'+lo.group(2)+'_'+lo.group(3)
+            upperQuanta = up.group(1)+'_'+up.group(2)+'_'+up.group(3)
+
+    
+    return lowerQuanta, upperQuanta
+
+
+def generate_einstein_As(elo,lgint,freq,gup,Q):
+    """
+    Calculate Einstein A for a given transition in a CDMS database
+    Follows the calculation detailed in 
+    https://cdms.astro.uni-koeln.de/classic/predictions/description.html
+    """
+    import astropy.units as u
+    import astropy.constants as const
+    freq = freq*u.MHz
+
+    #Convert elo from cm-1 to K and calculate eup
+    E_l = (elo / u.cm) * (const.h * (const.c.to(u.cm/u.s))) / const.k_B
+    E_u = E_l + (f.to(1/u.s) * const.h / const.k_B)
+
+    intensity = 10**lgint * u.nm**2 * u.MHz
+
+    gl_S_mu2 = 2.50251e4 * intensity.value * Q['300.0']  / (freq * (np.exp(-E_l / (300*u.K)) - np.exp(-E_u / (300*u.K))))
+
+    EA = 1.16395e-20 * (freq**3) * gl_S_mu2 / gup
+
+    return EA, E_u.value
+
 def hitran_to_lamda(lower,upper,mol):
     """
     Map the HITRAN local quanta to the LAMDA local quanta format
@@ -116,6 +186,7 @@ def hitran_to_lamda(lower,upper,mol):
     import re
 
     levels = []
+    
 
     if mol in ['aCH3OH','eCH3OH']:
         """
@@ -161,7 +232,6 @@ def hitran_to_lamda(lower,upper,mol):
         """
         LAMDA format is simply J. HITRAN does not populate the upper quantum numbers at all, but lists the lower quantum numbers with P, Q, R notation.
         """
-        
         lowerQuanta = str(re.sub('([EFef])',' ',lower))
         cleanQuanta = int(re.sub('([PRQef]|1$)', ' ',lower,))
         levels.append(f"{cleanQuanta:02d}")
