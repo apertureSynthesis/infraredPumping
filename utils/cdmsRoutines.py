@@ -111,7 +111,7 @@ def getCDMS(mol, emax, fmin=0*u.GHz, fmax=5000*u.GHz, saveFile=True):
         f.write("!LEVEL + ENERGIES(cm^-1) + WEIGHT + J, F\n")
 
     #Generate a list of levels and statistical weights
-    enlevels = {}
+    enlevs = {}
     gs = {}
     ups = {}
     los = {}
@@ -121,17 +121,34 @@ def getCDMS(mol, emax, fmin=0*u.GHz, fmax=5000*u.GHz, saveFile=True):
         ups[i] = qup
         los[i] = qlo
         if mol == 'SO':
-            jups[i] = int(qup.split('_')[1])
+            jups[qup] = int(qup.split('_')[1])
         else:
-            jups[i] = int(qup.split('_')[0])
+            jups[qup] = int(qup.split('_')[0])
                         
-        enlevels[qlo] = elo
+        enlevs[qlo] = elo
         gs[qup] = gup
         i+=1
 
     #Work out number of energy levels
-    nlev = len(e.keys())
-    sorted_enlevels = {key: value for key, value in sorted(enlevels.items(), key=lambda item: item[1])}
+    nlev = len(enlevs.keys())
+    sorted_enlevs = {key: value for key, value in sorted(enlevels.items(), key=lambda item: item[1])}
+    enlevels = pd.DataFrame()
+    j=0
+    for key in sorted_enlevs:
+        j+=1
+
+        #Lowest energy levels have undefined g, so set it according to J
+        if key not in gs.keys():
+            gs[key] = (2*jups[key] + 1)
+
+        enlevels['index'] = j
+        enlevels['energy'] = enlevs[key]
+        enlevels['weight'] = gs[key]
+        enlevels['J'] = key
+
+
+        
+
 
 
 
