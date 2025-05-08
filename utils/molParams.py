@@ -168,7 +168,12 @@ def getMolParams(mol,levels='all'):
                 'id': 41,
                 'iso': 1,
                 'groundState': '         GROUND' ,
-                'species': None},                    
+                'species': None},
+         'HCOOH': {'cdms': '046506 t-HCOOH',
+                'id': 32,
+                'iso': 1,
+                'groundState': '         GROUND' ,
+                'species': None},                     
     }
 
     if levels == 'all':
