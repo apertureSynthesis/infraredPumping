@@ -57,25 +57,83 @@ def getCDMS(mol, emax, fmin=0*u.GHz, fmax=5000*u.GHz, saveFile=True):
 
     #Drop 'name' and 'Lab' columns
     ctbl = ctbl.drop(['name','Lab'], axis=1)
+    ctbl = ctbl.reset_index()
 
     #Get the molecule data
     molData = CDMS.get_species_table()
     mtbl = molData[molData['tag'] == int(mol.split()[0])]
     Q300 = 10**mtbl['lg(Q(300))'].item()
 
-    ctbl['EA'] = ctbl.apply(lambda x: generate_Einstein_As(x['ELO'],x['LGINT'],x['FREQ'],x['GUP'],Q300), axis=1)
+    #Calculate the Einstein A's and E_ups
+    ctbl['EA'], ctbl['EU'] = ctbl.apply(lambda x: pd.Series(generate_Einstein_As(x['ELO'],x['LGINT'],x['FREQ'],x['GUP'],Q300)), axis=1)
 
     #Work out how many quantum numbers we have. They come after QNFMT, which is column 8. 
-    #Since we have upper and lower, divide by two to figure this out
+    #Since we have upper and lower, divide by two to figure this out.
+    #CDMS reserves at most 6 quanta for upper and lower levels
     cols = ctbl.columns
     nQuanta = int(len(cols[9:]))/2.
+    if nQuanta == 1:
+        ctbl['Qup'] = ctbl.apply(lambda x: str(x['Ju']), axis=1)
+        ctbl['Qlo'] = ctbl.apply(lambda x: str(x['Jl']), axis=1)
+    elif nQuanta == 2:
+        ctbl['Qup'] = ctbl.apply(lambda x: str(x['Ju'])+'_'+str(x['Ku']), axis=1)
+        ctbl['Qlo'] = ctbl.apply(lambda x: str(x['Jl'])+'_'+str(x['Kl']), axis=1)
+    elif nQuanta == 3:
+        ctbl['Qup'] = ctbl.apply(lambda x: str(x['Ju'])+'_'+str(x['Ku'])+'_'+str(x['vu']), axis=1)
+        ctbl['Qup'] = ctbl.apply(lambda x: str(x['Jl'])+'_'+str(x['Kl'])+'_'+str(x['vl']), axis=1)
+    elif nQuanta == 4:
+        ctbl['Qup'] = ctbl.apply(lambda x: str(x['Ju'])+'_'+str(x['Ku'])+'_'+str(x['vu'])+'_'+
+                                 str(x['F1u']), axis=1)
+        ctbl['Qup'] = ctbl.apply(lambda x: str(x['Jl'])+'_'+str(x['Kl'])+'_'+str(x['vl'])+'_'+
+                                 str(x['F1l']), axis=1)
+    elif nQuanta == 5:
+        ctbl['Qup'] = ctbl.apply(lambda x: str(x['Ju'])+'_'+str(x['Ku'])+'_'+str(x['vu'])+'_'+
+                                 str(x['F1u'])+'_'+str(x['F2u']), axis=1)
+        ctbl['Qup'] = ctbl.apply(lambda x: str(x['Jl'])+'_'+str(x['Kl'])+'_'+str(x['vl'])+'_'+
+                                 str(x['F1l'])+'_'+str(x['F2l']), axis=1)
+    elif nQuanta == 6:
+        ctbl['Qup'] = ctbl.apply(lambda x: str(x['Ju'])+'_'+str(x['Ku'])+'_'+str(x['vu'])+'_'+
+                                 str(x['F1u'])+'_'+str(x['F2u'])+'_'+str(x['F3u']), axis=1)
+        ctbl['Qup'] = ctbl.apply(lambda x: str(x['Jl'])+'_'+str(x['Kl'])+'_'+str(x['vl'])+'_'+
+                                 str(x['F1l'])+'_'+str(x['F2l'])+'_'+str(x['F3l']), axis=1)
+    else:
+        print('Problems defining quanta!')
+        return
+    
+    #Start writing output if desired
+    if saveFile:
+        f = open(mol+'-out.dat', 'w')
+        f.write("!MOLECULE\n")
+        f.write(f"{mol:s}\n")
+        f.write("INSERT MOL. WEIGHT (AMU)\n")
+        f.write("!NUMBER OF ENERGY LEVELS\n")
+        f.write(f"{nlev:4d}\n")
+        f.write("!LEVEL + ENERGIES(cm^-1) + WEIGHT + J, F\n")
 
     #Generate a list of levels and statistical weights
     enlevels = {}
     gs = {}
+    ups = {}
+    los = {}
+    jups = {}
     i=0
-    for elo, gup, qn2 in zip(ctbl['ELO'],ctbl['GUP']):
-        enlevels[]
+    for elo, gup, qup, qlo  in zip(ctbl['ELO'],ctbl['GUP'],ctbl['Qup'],ctbl['Qlo'],ctbl['Ju']):
+        ups[i] = qup
+        los[i] = qlo
+        if mol == 'SO':
+            jups[i] = int(qup.split('_')[1])
+        else:
+            jups[i] = int(qup.split('_')[0])
+                        
+        enlevels[qlo] = elo
+        gs[qup] = gup
+        i+=1
+
+    #Work out number of energy levels
+    nlev = len(e.keys())
+    sorted_enlevels = {key: value for key, value in sorted(enlevels.items(), key=lambda item: item[1])}
+
+
 
     
 

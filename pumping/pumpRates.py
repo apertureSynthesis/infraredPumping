@@ -33,7 +33,7 @@ class pumpRates(object):
         self.levels = levels
 
         #Get pertinent information about the molecule
-        lamdamol, id, iso, includeLevels, groundState, species = molParams.getMolParams(self.mol,self.levels)
+        cdmsMol, id, iso, includeLevels, groundState, species = molParams.getMolParams(self.mol,self.levels)
     
         #Table of all transitions from HITRAN between the specified min and max frequencies
         #Query GEISA for HNC, otherwise query HITRAN
@@ -66,9 +66,16 @@ class pumpRates(object):
             self.tbl.loc[:,'gp'] = self.tbl['local_uppr_quanta_lamda'].apply(quantumNumbers.generate_statistical_weights)
             self.tbl.loc[:,'gpp'] = self.tbl['local_lower_quanta_lamda'].apply(quantumNumbers.generate_statistical_weights)
 
-        #Import the LAMDA data
-        collrates, radtransitions, enlevels = lamdaRoutines.query_lamda(lamdamol=lamdamol)
-        self.levels = enlevels.to_pandas()
+        # #Import the LAMDA data
+        # collrates, radtransitions, enlevels = lamdaRoutines.query_lamda(lamdamol=lamdamol)
+        # self.levels = enlevels.to_pandas()
+
+        #Import the CDMS data
+        #First the line list
+        self.ctbl = CDMS.query_lines(min_frequency=0*u.GHz, max_frequency=5000*u.GHz, molecule = self.cdmsMol).to_pandas()
+        #Now the molecule data
+        molData = CDMS.get_species_table()
+        self.mtbl = molData[molData['tag'] == int(self.cdmsMol.split()[0])]
 
         #Make a dictionary to hold all of the level rate summations
         gratesum={} 
