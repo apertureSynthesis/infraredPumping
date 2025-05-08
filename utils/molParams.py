@@ -163,7 +163,12 @@ def getMolParams(mol,levels='all'):
                 'id': 44,
                 'iso': 1,
                 'groundState': '  0000000 0 0 0',
-                'species': None},                
+                'species': None}, 
+         'CH3CN': {'cdms': '041505 CH3CN',
+                'id': 41,
+                'iso': 1,
+                'groundState': '         GROUND' ,
+                'species': None},                    
     }
 
     if levels == 'all':
