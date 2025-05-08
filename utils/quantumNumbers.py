@@ -157,28 +157,6 @@ def hitran_to_cdms(lower,upper,mol):
     return lowerQuanta, upperQuanta
 
 
-def generate_einstein_As(elo,lgint,freq,gup,Q):
-    """
-    Calculate Einstein A for a given transition in a CDMS database
-    Follows the calculation detailed in 
-    https://cdms.astro.uni-koeln.de/classic/predictions/description.html
-    """
-    import astropy.units as u
-    import astropy.constants as const
-    freq = freq*u.MHz
-
-    #Convert elo from cm-1 to K and calculate eup
-    E_l = (elo / u.cm) * (const.h * (const.c.to(u.cm/u.s))) / const.k_B
-    E_u = E_l + (f.to(1/u.s) * const.h / const.k_B)
-
-    intensity = 10**lgint * u.nm**2 * u.MHz
-
-    gl_S_mu2 = 2.50251e4 * intensity.value * Q['300.0']  / (freq * (np.exp(-E_l / (300*u.K)) - np.exp(-E_u / (300*u.K))))
-
-    EA = 1.16395e-20 * (freq**3) * gl_S_mu2 / gup
-
-    return EA, E_u.value
-
 def hitran_to_lamda(lower,upper,mol):
     """
     Map the HITRAN local quanta to the LAMDA local quanta format

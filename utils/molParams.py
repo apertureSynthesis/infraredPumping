@@ -178,6 +178,6 @@ def getMolParams(mol,levels='all'):
 
     if levels == 'all':
         includeLevels = None
-        return param_dict[mol]['lamdamol'], param_dict[mol]['id'], param_dict[mol]['iso'], includeLevels, param_dict[mol]['groundState'], param_dict[mol]['species']
+        return param_dict[mol]['cdms'], param_dict[mol]['id'], param_dict[mol]['iso'], includeLevels, param_dict[mol]['groundState'], param_dict[mol]['species']
     else:
-        return param_dict[mol]['lamdamol'], param_dict[mol]['id'], param_dict[mol]['iso'], param_dict[mol]['includeLevels'], param_dict[mol]['groundState'], param_dict[mol]['species']
+        return param_dict[mol]['cdms'], param_dict[mol]['id'], param_dict[mol]['iso'], param_dict[mol]['includeLevels'], param_dict[mol]['groundState'], param_dict[mol]['species']
