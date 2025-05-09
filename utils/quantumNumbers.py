@@ -1,3 +1,48 @@
+def omega(theta):
+    import numpy as np
+    """Solid angle subtended by the Sun
+    Parameters
+    ----------
+    theta : float
+        Angular diameter of the Sun
+    Returns
+    -------
+    omega : float
+        The resulting solid angle for the Sun
+        https://en.wikipedia.org/wiki/Solid_angle
+    """
+    omega = 2*np.pi*(1.-np.cos(theta/2.))
+    return omega
+
+
+def glu(sigma, gu, gl, distance=1):
+    import numpy as np
+    import astropy.constants as const
+    """Pumping rate from lower to upper level glu
+    divided by the Einstein coefficient Aul
+    (equation A7 from Crovisier & Encrenaz 1983)
+    Parameters
+    ----------
+    sigma : float
+        wavenumber in units of cm-1
+    gu : float
+        upper level degeneracy
+    gl : float
+        lower level degeneracy
+    Returns
+    -------
+    glu : float
+        This is actually glu/Aul
+    """
+    # solid angle subtended by the Sun
+    om = omega(9.35e-3/distance)
+    # black-body Sun temperature in K
+    Tbb = 5778.
+    # relative population of the lower level
+    pl = 1.
+    glu = (om/(4.*np.pi))*(gu/gl)*pl/(np.exp(const.h.value*const.c.value * sigma*1e2/const.k_B.value/Tbb)-1.)
+
+    return glu
 
 def generate_statistical_weights(level):
     """
@@ -23,10 +68,10 @@ def generate_linear_quanta(lower,upper,mol):
         """
         CDMS format is simply J. HITRAN does not populate the upper quantum numbers at all, but lists the lower quantum numbers with P, Q, R notation.
         """
-        lo = re.match('\s*([OPSQRT])\s*(\d*)([a-z])(.*)',lower)
+        lo = re.match('\s*([OPSQRT])\s*(\d*)([a-z]*)(.*)',lower)
         loBranch = lo.group(1)
-        Jlo = int(loBranch.group(2))
-        Jup = int(Jlo + branch_dict[loBranch])
+        Jlo = int(lo.group(2))
+        Jup = f"{int(Jlo + branch_dict[loBranch])}"
 
         lowerQuanta = Jlo
         upperQuanta = Jup
@@ -37,11 +82,11 @@ def generate_linear_quanta(lower,upper,mol):
         """      
         lo = re.match('\s*([OPQRST])\s*(\d*)([OPQRST])\s*(\d*)(.*)(.*)',lower)  
         nBranch = lo.group(1)
-        Nlo = lo.group(2)
+        Nlo = int(lo.group(2))
         jBranch = lo.group(3)
-        Jlo = lo.group(4)
-        Nup = int(Nlo + branch_dict[nBranch])
-        Jup = int(Jlo + branch_dict[jBranch])
+        Jlo = int(lo.group(4))
+        Nup = f"{int(Nlo + branch_dict[nBranch])}"
+        Jup = f"{int(Jlo + branch_dict[jBranch])}"
 
         lowerQuanta = Nlo+'_'+Jlo
         upperQuanta = Nup+'_'+Jup
@@ -118,29 +163,20 @@ def hitran_to_cdms(lower,upper,mol):
     if mol in ['HCN', 'CO', 'CS', 'HNC', 'C34S', 'C33S', 'OCS', 'HC3N']:
         """
         CDMS format is simply J. HITRAN does not populate the upper quantum numbers at all, but lists the lower quantum numbers with P, Q, R notation.
+        We've already generated these into CDMS format in a previous step
         """
-        lo = re.match('\s*([OPSQRT])\s*(\d*)([a-z])(.*)',lower)
-        loBranch = lo.group(1)
-        Jlo = int(loBranch.group(2))
-        Jup = int(Jlo + branch_dict[loBranch])
 
-        lowerQuanta = Jlo
-        upperQuanta = Jup
+        lowerQuanta = lower
+        upperQuanta = upper
 
     elif mol in ['SO']:
         """
         CDMS format is N J. HITRAN does not populate the upper quantum numbers at all, but lists the lower quantum numbers with P, Q, R notation.
+        We've already generated these in CDMS format in a previous step.
         """      
-        lo = re.match('\s*([OPQRST])\s*(\d*)([OPQRST])\s*(\d*)(.*)(.*)',lower)  
-        nBranch = lo.group(1)
-        Nlo = lo.group(2)
-        jBranch = lo.group(3)
-        Jlo = lo.group(4)
-        Nup = int(Nlo + branch_dict[nBranch])
-        Jup = int(Jlo + branch_dict[jBranch])
 
-        lowerQuanta = Nlo+'_'+Jlo
-        upperQuanta = Nup+'_'+Jup
+        lowerQuanta = lower
+        upperQuanta = upper
 
     elif mol in ['H2O','HDO','H2CO','SO2','H2S','HCOOH']:
         """
