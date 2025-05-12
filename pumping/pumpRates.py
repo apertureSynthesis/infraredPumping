@@ -31,12 +31,13 @@ class pumpRates(object):
     black body radiation field
     """
 
-    def __init__(self, mol, numax = 30000./u.cm, nlev=-1, levels='all'):
+    def __init__(self, mol, emax, numax = 30000./u.cm, nlev=-1, levels='all'):
         """
         pumping rates excited by solar radiation ignoring hot band cascades
         """
 
         self.mol = mol
+        self.emax = emax
         self.numax = numax
         self.levels = levels
 
@@ -81,7 +82,7 @@ class pumpRates(object):
 
         #Import the CDMS data
         #First the line list
-        self.ctbl, self.enlevels = cdmsRoutines.getCDMS(mol = cdmsMol, emax = 1000./u.cm, min_frequency=0*u.GHz, max_frequency=5000*u.GHz)
+        self.ctbl, self.enlevels = cdmsRoutines.getCDMS(mol = cdmsMol, emax = self.emax, min_frequency=0*u.GHz, max_frequency=5000*u.GHz)
 
         #Make a dictionary to hold all of the level rate summations
         self.gratesum={} 
@@ -125,6 +126,7 @@ class pumpRates(object):
             QNL = np.asarray([s for s in self.tblf['local_lower_quanta_cdms']]).transpose() #lower quantum numbers
             QNU = np.asarray([s for s in self.tblf['local_upper_quanta_cdms']]).transpose() #upper quantum numbers
 
+            print('Browsing through the transitions...')
             for Qlo,Qup,A1,G in zip(QNL,QNU,A,grate):
                 #For a given Qlo,Qup find other transitions for which Qup is the lower quantum number
                 #These represent possible vibronic transitions
@@ -148,7 +150,7 @@ class pumpRates(object):
                 self.Jups    = np.delete(self.Jups,self.todel)
                 self.As      = np.delete(self.As,self.todel)
                 self.grates  = np.delete(self.grates,self.todel)
-
+                print('Creating the Einstein-A table')
                 #Einstein A lookup table
                 self.Atable = collections.defaultdict(dict)
                 self.Asum = {}         
