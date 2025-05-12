@@ -61,39 +61,40 @@ def generate_linear_quanta(lower,upper,mol):
     import re
     
     #Dictionary of branch notation for linear molecules
-    branch_dict = {'O': -2, 'P': -1, 'Q': 0, 'R': 1, 'S': 2, 'T': 3}
+    branch_dict = {'N': -3, 'O': -2, 'P': -1, 'Q': 0, 'R': 1, 'S': 2, 'T': 3}
 
     
     if mol in ['HCN', 'CO', 'CS', 'HNC', 'C34S', 'C33S', 'OCS', 'HC3N']:
         """
         CDMS format is simply J. HITRAN does not populate the upper quantum numbers at all, but lists the lower quantum numbers with P, Q, R notation.
         """
-        lo = re.match('\s*([OPSQRT])\s*(\d*)([a-z]*)(.*)',lower)
+        lo = re.match('\s*([NOPSQRT])\s*(\d*)([a-z]*)(.*)',lower)
         loBranch = lo.group(1)
         Jlo = int(lo.group(2))
-        Jup = f"{int(Jlo + branch_dict[loBranch])}"
+        Jup = int(Jlo + branch_dict[loBranch])
 
-        lowerQuanta = Jlo
-        upperQuanta = Jup
+        lowerQuanta = f"{int(Jlo)}"
+        upperQuanta = f"{int(Jup)}"
 
     elif mol in ['SO']:
         """
         CDMS format is N J. HITRAN does not populate the upper quantum numbers at all, but lists the lower quantum numbers with P, Q, R notation.
         """      
-        lo = re.match('\s*([OPQRST])\s*(\d*)([OPQRST])\s*(\d*)(.*)(.*)',lower)  
+        lo = re.match('\s*([NOPQRST])\s*(\d*)([NOPQRST])\s*(\d*)(.*)(.*)',lower)  
+
         nBranch = lo.group(1)
         Nlo = int(lo.group(2))
         jBranch = lo.group(3)
         Jlo = int(lo.group(4))
-        Nup = f"{int(Nlo + branch_dict[nBranch])}"
-        Jup = f"{int(Jlo + branch_dict[jBranch])}"
+        Nup = int(Nlo + branch_dict[nBranch])
+        Jup = int(Jlo + branch_dict[jBranch])
 
-        lowerQuanta = Nlo+'_'+Jlo
-        upperQuanta = Nup+'_'+Jup
+        lowerQuanta = str(str(Nlo)+'_'+str(Jlo))
+        upperQuanta = str(str(Nup)+'_'+str(Jup))
 
     else:
-        lowerQuanta = lower
-        upperQuanta = upper
+        lowerQuanta = f"{lower}"
+        upperQuanta = f"{upper}"
 
     return lowerQuanta, upperQuanta
 
@@ -166,8 +167,8 @@ def hitran_to_cdms(lower,upper,mol):
         We've already generated these into CDMS format in a previous step
         """
 
-        lowerQuanta = lower
-        upperQuanta = upper
+        lowerQuanta = str(lower)
+        upperQuanta = str(upper)
 
     elif mol in ['SO']:
         """

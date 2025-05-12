@@ -87,7 +87,6 @@ class pumpRates(object):
 
         #Select the upper quantum levels that we want to work with
         vups = self.tbl['global_upper_quanta'].unique().tolist()
-        print(includeLevels)
         vups.remove(groundState)
 
         try:
@@ -138,7 +137,7 @@ class pumpRates(object):
                     grates.append(G)
 
             if len(self.tblf)>MINTRANS:
-            #Remove transitions not in Jup,Jlo
+                #Remove transitions not in Jup,Jlo
                 todel1=np.where(np.asarray([trans in list(zip(QNL,QNU)) for trans in zip(Jfinals,Jups)])==False)
                 todel2=np.where(np.asarray([trans in list(zip(QNL,QNU)) for trans in zip(Jinits,Jups)])==False)
                 todel=np.concatenate([todel1[0],todel2[0]])
@@ -149,22 +148,64 @@ class pumpRates(object):
                 As      = np.delete(As,todel)
                 grates  = np.delete(grates,todel)
 
-            #Einstein A lookup table
-            Atable = collections.defaultdict(nest_defaultdict)
-            Asum = {}         
+                #Einstein A lookup table
+                Atable = collections.defaultdict(nest_defaultdict)
+                Asum = {}         
 
-            for Q1 in Jups:
-                Asum[Q1] = 0.0
-            for Q1,Q2,A12 in zip(Qup,Qlo,A):
-                try:
-                    Atable[Q1][Q2] = A12
-                    Asum[Q1] += A12
-                except:
-                    pass
+                for Q1 in Jups:
+                    Asum[Q1] = 0.0
+                for Q1,Q2,A12 in zip(QNU,QNL,A):
+                    try:
+                        Atable[Q1][Q2] = A12
+                        Asum[Q1] += A12
+                    except:
+                        pass
 
-            prob = []
-            #Fraction of each Jupper going into each Jfinal
-            for Q1,Q2 in zip(Jups,Jfinals):
-                prob.append(Atable[Q1][Q2] / Asum[Q1])
+                prob = []
+                #Fraction of each Jupper going into each Jfinal
+                for Q1,Q2 in zip(Jups,Jfinals):
+                    prob.append(Atable[Q1][Q2] / Asum[Q1])
+
+                #Multiply by the probabilities and Einstein A's
+                gratesA = np.array(grates) * np.array(As) * np.array(prob)
+                print(self.enlevels)
+                print(Jinits)
+                #Sum rates with the same Jinit, Jfinal
+                for Jinit,Jfinal,grateJ in zip(Jinits,Jfinals,gratesA):
+                    if (Jinit != Jfinal):
+                        if (any(self.enlevels.J) == Jinit) and (any(self.enlevels.J == Jfinal)):
+                            try:
+                                gratesum[str(Jinit+" "+Jfinal)] += grateJ
+                            except:
+                                gratesum[str(Jinit+" "+Jfinal)] = grateJ
+            
+                vuplist.append(vup)
+
+            else:
+                sys.stderr.write("Insufficient transitions to calculate pumping for this level\n")
+
+        print('grate = ....')
+        print(gratesum)
+
+        #Get the unique set Qinit, Qfinal and print the results. Format them so that Qinit, Qfinal correspond to their indices in the LAMDA file
+        # gratesumfinal={}
+        # QinitSum,QfinalSum = np.asarray([s.split(' ') for s in list(gratesum.keys())],dtype=str).transpose()
+        # sys.stderr.write("\nTotal effective %s pumping rates (Qi, Qf, Rate (s^-1) at 1 AU:\n" %(mol))
+        # levels_lo = []
+        # levels_up = []
+
+        # for Qi,Qf in sorted(zip(QinitSum,QfinalSum)):
+        #     level_lo = self.enlevels[self.enlevels['J'].str.match(Qi)]['Level'].values[0]
+        #     level_up = self.enlevels[self.enlevels['J'].str.match(Qf)]['Level'].values[0]
+        #     levels_lo.append(level_lo)
+        #     levels_up.append(level_up)
+        #     gratesumfinal[str(level_lo)+" "+str(level_up)]=gratesum[str(Qi)+" "+str(Qf)]
+        # file_out = "g_"+str(self.mol)+"_1au.dat"
+        # f = open(file_out,"w")
+        # for Li,Lf in sorted(zip(levels_lo,levels_up)):
+        #     f.write('%s %s %s \n' %(Li,Lf,gratesumfinal[str(Li)+" "+str(Lf)]))
+        # f.close()
+
+
 
 

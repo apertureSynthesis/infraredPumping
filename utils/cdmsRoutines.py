@@ -73,20 +73,20 @@ def getCDMS(mol, emax, min_frequency=0*u.GHz, max_frequency=5000*u.GHz, saveFile
         ctbl['Qup'] = ctbl.apply(lambda x: f"{int(x['Ju'])}", axis=1)
         ctbl['Qlo'] = ctbl.apply(lambda x: f"{int(x['Jl'])}", axis=1)
     elif nQuanta == 2:
-        ctbl['Qup'] = ctbl.apply(lambda x: f"{int(x['Ju'])}+'_'+{int(x['Ku'])}", axis=1)
-        ctbl['Qlo'] = ctbl.apply(lambda x: f"{int(x['Jl'])}+'_'+{int(x['Kl'])}", axis=1)
+        ctbl['Qup'] = ctbl.apply(lambda x: f"{int(x['Ju'])}"+'_'+f"{int(x['Ku'])}", axis=1)
+        ctbl['Qlo'] = ctbl.apply(lambda x: f"{int(x['Jl'])}"+'_'+f"{int(x['Kl'])}", axis=1)
     elif nQuanta == 3:
-        ctbl['Qup'] = ctbl.apply(lambda x: f"{int(x['Ju'])}+'_'+{int(x['Ku'])}+'_'+{int(x['vu'])}", axis=1)
-        ctbl['Qup'] = ctbl.apply(lambda x: f"{int(x['Jl'])}+'_'+{int(x['Kl'])}+'_'+{int(x['vl'])}", axis=1)
+        ctbl['Qup'] = ctbl.apply(lambda x: f"{int(x['Ju'])}"+'_'+f"{int(x['Ku'])}"+'_'+f"{int(x['vu'])}", axis=1)
+        ctbl['Qlo'] = ctbl.apply(lambda x: f"{int(x['Jl'])}"+'_'+f"{int(x['Kl'])}"+'_'+f"{int(x['vl'])}", axis=1)
     elif nQuanta == 4:
-        ctbl['Qup'] = ctbl.apply(lambda x: f"{int(x['Ju'])}+'_'+{int(x['Ku'])}+'_'+{int(x['vu'])}+'_'+{int(x['F1u'])}", axis=1)
-        ctbl['Qup'] = ctbl.apply(lambda x: f"{int(x['Jl'])}+'_'+{int(x['Kl'])}+'_'+{x['vl']}+'_'+{x['F1l']}", axis=1)
+        ctbl['Qup'] = ctbl.apply(lambda x: f"{int(x['Ju'])}"+'_'+f"{int(x['Ku'])}"+'_'+f"{int(x['vu'])}"+'_'+f"{int(x['F1u'])}", axis=1)
+        ctbl['Qlo'] = ctbl.apply(lambda x: f"{int(x['Jl'])}"+'_'+f"{int(x['Kl'])}"+'_'+f"{int(x['vl'])}"+'_'+f"{int(x['F1l'])}", axis=1)
     elif nQuanta == 5:
-        ctbl['Qup'] = ctbl.apply(lambda x: f"{int(x['Ju'])}+'_'+{int(x['Ku'])}+'_'{int(x['vu'])}+'_'+{int(x['F1u'])}+'_'+{int(x['F2u'])}", axis=1)
-        ctbl['Qup'] = ctbl.apply(lambda x: f"{int(x['Jl'])}+'_'+{int(x['Kl'])}+'_'{int(x['vl'])}+'_'+{int(x['F1l'])}+'_'+{int(x['F2l'])}", axis=1)
+        ctbl['Qup'] = ctbl.apply(lambda x: f"{int(x['Ju'])}"+'_'+f"{int(x['Ku'])}"+'_'+f"{int(x['vu'])}"+'_'+f"{int(x['F1u'])}"+'_'+f"{int(x['F2u'])}", axis=1)
+        ctbl['Qlo'] = ctbl.apply(lambda x: f"{int(x['Jl'])}"+'_'+f"{int(x['Kl'])}"+'_'+f"{int(x['vl'])}"+'_'+f"{int(x['F1l'])}"+'_'+f"{int(x['F2l'])}", axis=1)
     elif nQuanta == 6:
-        ctbl['Qup'] = ctbl.apply(lambda x: f"{int(x['Ju'])}+'_'+{int(x['Ku'])}+'_'{int(x['vu'])}+'_'+{int(x['F1u'])}+'_'+{int(x['F2u'])}+'_'+{int(x['F3u'])}", axis=1)
-        ctbl['Qup'] = ctbl.apply(lambda x: f"{int(x['Jl'])}+'_'+{int(x['Kl'])}+'_'{int(x['vl'])}+'_'+{int(x['F1l'])}+'_'+{int(x['F2l'])}+'_'+{int(x['F3l'])}", axis=1)
+        ctbl['Qup'] = ctbl.apply(lambda x: f"{int(x['Ju'])}"+'_'+f"{int(x['Ku'])}"+'_'+f"{int(x['vu'])}"+'_'+f"{int(x['F1u'])}"+'_'+f"{int(x['F2u'])}"+'_'+f"{int(x['F3u'])}", axis=1)
+        ctbl['Qlo'] = ctbl.apply(lambda x: f"{int(x['Jl'])}"+'_'+f"{int(x['Kl'])}"+'_'+f"{int(x['vl'])}"+'_'+f"{int(x['F1l'])}"+'_'+f"{int(x['F2l'])}"+'_'+f"{int(x['F3l'])}", axis=1)
     else:
         print('Problems defining quanta!')
         return
@@ -102,6 +102,7 @@ def getCDMS(mol, emax, min_frequency=0*u.GHz, max_frequency=5000*u.GHz, saveFile
         ups[i] = qup
         los[i] = qlo
         if mol.split()[1] == 'SO':
+            print(qlo)
             jlos[qlo] = int(qlo.split('_')[1])
         else:
             jlos[qlo] = int(qlo.split('_')[0])
@@ -124,7 +125,7 @@ def getCDMS(mol, emax, min_frequency=0*u.GHz, max_frequency=5000*u.GHz, saveFile
         f.write("!LEVEL + ENERGIES(cm^-1) + WEIGHT + J, F\n")
 
     sorted_enlevs = {key: value for key, value in sorted(enlevs.items(), key=lambda item: item[1])}
-    enlevels = {}
+    enlevels = pd.DataFrame()
     levels = {}
     j=0
     for key in sorted_enlevs:
@@ -137,11 +138,21 @@ def getCDMS(mol, emax, min_frequency=0*u.GHz, max_frequency=5000*u.GHz, saveFile
             else:
                 gs[key] = (2*jlos[key] + 1)
 
-        enlevels[j] = {}
-        enlevels[j]['index'] = j
-        enlevels[j]['energy'] = enlevs[key]
-        enlevels[j]['weight'] = gs[key]
-        enlevels[j]['J'] = key
+        if j==1:
+        #enlevels[j] = {}
+            enlevels['index'] = [j]
+            enlevels['energy'] = [enlevs[key]]
+            enlevels['weight'] = [gs[key]]
+            enlevels['J'] = [str(key)]
+        else:
+            df = pd.DataFrame()
+            df['index'] = [j]
+            df['energy'] = [enlevs[key]]
+            df['weight'] = [gs[key]]
+            df['J'] = [str(key)]
+
+            enlevels = pd.concat([enlevels,df],ignore_index=True)
+
         levels[key] = j
 
         if saveFile:
@@ -162,9 +173,12 @@ def getCDMS(mol, emax, min_frequency=0*u.GHz, max_frequency=5000*u.GHz, saveFile
 
         tran=0
         for l in np.arange(ntran):
-            levels[ups[l]]
-            tran += 1
-            f.write(f"{tran:5d} {levels[ups[l]]:5d} {levels[los[l]]:5d}   {ctbl['EA'][l]:10.4e}    {ctbl['FREQ'][l]/1000.:12.7f}   {ctbl['EU'][l]:7.2f}\n")
+            try:
+                levels[ups[l]]
+                tran += 1
+                f.write(f"{tran:5d} {levels[ups[l]]:5d} {levels[los[l]]:5d}   {ctbl['EA'][l]:10.4e}    {ctbl['FREQ'][l]/1000.:12.7f}   {ctbl['EU'][l]:7.2f}\n")
+            except:
+                pass
 
         f.write("!NUMBER OF COLL PARTNERS\n")
         f.write("1                        \n")
