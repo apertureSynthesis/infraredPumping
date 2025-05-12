@@ -43,6 +43,7 @@ def getMolParams(mol,levels='all'):
                 'iso': 1,
                 'groundState': '        0 0 0 0',
                 'includeLevels': ['        1 0 0 0','        0 1 1 0','        0 2 0 0'],
+                #'includeLevels': ['        1 0 0 0'],
                 'species': None},
         'aCH3OH': {'lamdamol': 'a-ch3oh',
                    'id': 39,

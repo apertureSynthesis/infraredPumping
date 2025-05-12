@@ -70,23 +70,23 @@ def getCDMS(mol, emax, min_frequency=0*u.GHz, max_frequency=5000*u.GHz, saveFile
     qnfmt = np.where(cols == 'QNFMT')[0][0]
     nQuanta = int(len(cols[qnfmt+1:-2]))/2.
     if nQuanta == 1:
-        ctbl['Qup'] = ctbl.apply(lambda x: f"{int(x['Ju'])}", axis=1)
-        ctbl['Qlo'] = ctbl.apply(lambda x: f"{int(x['Jl'])}", axis=1)
+        ctbl['Qup'] = ctbl.apply(lambda x: str(int(x['Ju'])), axis=1)
+        ctbl['Qlo'] = ctbl.apply(lambda x: str(int(x['Jl'])), axis=1)
     elif nQuanta == 2:
-        ctbl['Qup'] = ctbl.apply(lambda x: f"{int(x['Ju'])}"+'_'+f"{int(x['Ku'])}", axis=1)
-        ctbl['Qlo'] = ctbl.apply(lambda x: f"{int(x['Jl'])}"+'_'+f"{int(x['Kl'])}", axis=1)
+        ctbl['Qup'] = ctbl.apply(lambda x: str(int(x['Ju']))+'_'+str(int(x['Ku'])), axis=1)
+        ctbl['Qlo'] = ctbl.apply(lambda x: str(int(x['Jl']))+'_'+str(int(x['Kl'])), axis=1)
     elif nQuanta == 3:
-        ctbl['Qup'] = ctbl.apply(lambda x: f"{int(x['Ju'])}"+'_'+f"{int(x['Ku'])}"+'_'+f"{int(x['vu'])}", axis=1)
-        ctbl['Qlo'] = ctbl.apply(lambda x: f"{int(x['Jl'])}"+'_'+f"{int(x['Kl'])}"+'_'+f"{int(x['vl'])}", axis=1)
+        ctbl['Qup'] = ctbl.apply(lambda x: str(int(x['Ju']))+'_'+str(int(x['Ku']))+'_'+str(int(x['vu'])), axis=1)
+        ctbl['Qlo'] = ctbl.apply(lambda x: str(int(x['Jl']))+'_'+str(int(x['Kl']))+'_'+str(int(x['vl'])), axis=1)
     elif nQuanta == 4:
-        ctbl['Qup'] = ctbl.apply(lambda x: f"{int(x['Ju'])}"+'_'+f"{int(x['Ku'])}"+'_'+f"{int(x['vu'])}"+'_'+f"{int(x['F1u'])}", axis=1)
-        ctbl['Qlo'] = ctbl.apply(lambda x: f"{int(x['Jl'])}"+'_'+f"{int(x['Kl'])}"+'_'+f"{int(x['vl'])}"+'_'+f"{int(x['F1l'])}", axis=1)
+        ctbl['Qup'] = ctbl.apply(lambda x: str(int(x['Ju']))+'_'+str(int(x['Ku']))+'_'+str(int(x['vu']))+'_'+str(int(x['F1u'])), axis=1)
+        ctbl['Qlo'] = ctbl.apply(lambda x: str(int(x['Jl']))+'_'+str(int(x['Kl']))+'_'+str(int(x['vl']))+'_'+str(int(x['F1l'])), axis=1)
     elif nQuanta == 5:
-        ctbl['Qup'] = ctbl.apply(lambda x: f"{int(x['Ju'])}"+'_'+f"{int(x['Ku'])}"+'_'+f"{int(x['vu'])}"+'_'+f"{int(x['F1u'])}"+'_'+f"{int(x['F2u'])}", axis=1)
-        ctbl['Qlo'] = ctbl.apply(lambda x: f"{int(x['Jl'])}"+'_'+f"{int(x['Kl'])}"+'_'+f"{int(x['vl'])}"+'_'+f"{int(x['F1l'])}"+'_'+f"{int(x['F2l'])}", axis=1)
+        ctbl['Qup'] = ctbl.apply(lambda x: str(int(x['Ju']))+'_'+str(int(x['Ku']))+'_'+str(int(x['vu']))+'_'+str(int(x['F1u']))+'_'+str(int(x['F2u'])), axis=1)
+        ctbl['Qlo'] = ctbl.apply(lambda x: str(int(x['Jl']))+'_'+str(int(x['Kl']))+'_'+str(int(x['vl']))+'_'+str(int(x['F1l']))+'_'+str(int(x['F2l'])), axis=1)
     elif nQuanta == 6:
-        ctbl['Qup'] = ctbl.apply(lambda x: f"{int(x['Ju'])}"+'_'+f"{int(x['Ku'])}"+'_'+f"{int(x['vu'])}"+'_'+f"{int(x['F1u'])}"+'_'+f"{int(x['F2u'])}"+'_'+f"{int(x['F3u'])}", axis=1)
-        ctbl['Qlo'] = ctbl.apply(lambda x: f"{int(x['Jl'])}"+'_'+f"{int(x['Kl'])}"+'_'+f"{int(x['vl'])}"+'_'+f"{int(x['F1l'])}"+'_'+f"{int(x['F2l'])}"+'_'+f"{int(x['F3l'])}", axis=1)
+        ctbl['Qup'] = ctbl.apply(lambda x: str(int(x['Ju']))+'_'+str(int(x['Ku']))+'_'+str(int(x['vu']))+'_'+str(int(x['F1u']))+'_'+str(int(x['F2u']))+'_'+str(int(x['F3u'])), axis=1)
+        ctbl['Qlo'] = ctbl.apply(lambda x: str(int(x['Jl']))+'_'+str(int(x['Kl']))+'_'+str(int(x['vl']))+'_'+str(int(x['F1l']))+'_'+str(int(x['F2l']))+'_'+str(int(x['F3l'])), axis=1)
     else:
         print('Problems defining quanta!')
         return
@@ -140,15 +140,15 @@ def getCDMS(mol, emax, min_frequency=0*u.GHz, max_frequency=5000*u.GHz, saveFile
 
         if j==1:
         #enlevels[j] = {}
-            enlevels['index'] = [j]
-            enlevels['energy'] = [enlevs[key]]
-            enlevels['weight'] = [gs[key]]
+            enlevels['Level'] = [j]
+            enlevels['Energy'] = [enlevs[key]]
+            enlevels['Weight'] = [gs[key]]
             enlevels['J'] = [str(key)]
         else:
             df = pd.DataFrame()
-            df['index'] = [j]
-            df['energy'] = [enlevs[key]]
-            df['weight'] = [gs[key]]
+            df['Level'] = [j]
+            df['Energy'] = [enlevs[key]]
+            df['Weight'] = [gs[key]]
             df['J'] = [str(key)]
 
             enlevels = pd.concat([enlevels,df],ignore_index=True)

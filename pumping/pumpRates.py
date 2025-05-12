@@ -42,6 +42,7 @@ class pumpRates(object):
 
         #Get pertinent information about the molecule
         cdmsMol, id, iso, includeLevels, groundState, species = molParams.getMolParams(self.mol,self.levels)
+        print(includeLevels)
     
         #Table of all transitions from HITRAN between the specified min and max frequencies
         #Query GEISA for HNC, otherwise query HITRAN
@@ -83,7 +84,7 @@ class pumpRates(object):
         self.ctbl, self.enlevels = cdmsRoutines.getCDMS(mol = cdmsMol, emax = 1000./u.cm, min_frequency=0*u.GHz, max_frequency=5000*u.GHz)
 
         #Make a dictionary to hold all of the level rate summations
-        gratesum={} 
+        self.gratesum={} 
 
         #Select the upper quantum levels that we want to work with
         vups = self.tbl['global_upper_quanta'].unique().tolist()
@@ -105,11 +106,11 @@ class pumpRates(object):
             self.tblf=self.tbl[self.tbl['global_upper_quanta'].isin([vup]) & self.tbl['global_lower_quanta'].isin([groundState])]
 
             #Arrays for holding the quantum numbers, Einstein A's and g rates
-            Jinits  = []
-            Jups    = []
-            Jfinals = []
-            As      = []
-            grates  = []
+            self.Jinits  = []
+            self.Jups    = []
+            self.Jfinals = []
+            self.As      = []
+            self.grates  = []
 
             #Arrays for wavenumber, statistical weights, and Einstein A
             nu = self.tblf['nu']
@@ -128,83 +129,79 @@ class pumpRates(object):
                 #For a given Qlo,Qup find other transitions for which Qup is the lower quantum number
                 #These represent possible vibronic transitions
                 for i in self.tblf[self.tblf['local_upper_quanta_cdms'].str.match(Qup)]['local_lower_quanta_cdms'].values:
-                    Jfinals.append(i)
+                    self.Jfinals.append(i)
                 #Record Qlo, Qup, A, and g for every possible vibronic transition
                 for j in range(len(self.tblf[self.tblf['local_upper_quanta_cdms'].str.match(Qup)]['local_lower_quanta_cdms'].values)):
-                    Jinits.append(Qlo)
-                    Jups.append(Qup)
-                    As.append(A1)
-                    grates.append(G)
+                    self.Jinits.append(Qlo)
+                    self.Jups.append(Qup)
+                    self.As.append(A1)
+                    self.grates.append(G)
 
             if len(self.tblf)>MINTRANS:
                 #Remove transitions not in Jup,Jlo
-                todel1=np.where(np.asarray([trans in list(zip(QNL,QNU)) for trans in zip(Jfinals,Jups)])==False)
-                todel2=np.where(np.asarray([trans in list(zip(QNL,QNU)) for trans in zip(Jinits,Jups)])==False)
-                todel=np.concatenate([todel1[0],todel2[0]])
+                todel1=np.where(np.asarray([trans in list(zip(QNL,QNU)) for trans in zip(self.Jfinals,self.Jups)])==False)
+                todel2=np.where(np.asarray([trans in list(zip(QNL,QNU)) for trans in zip(self.Jinits,self.Jups)])==False)
+                self.todel=np.concatenate([todel1[0],todel2[0]])
 
-                Jinits  = np.delete(Jinits,todel)
-                Jfinals = np.delete(Jfinals,todel)
-                Jups    = np.delete(Jups,todel)
-                As      = np.delete(As,todel)
-                grates  = np.delete(grates,todel)
+                self.Jinits  = np.delete(self.Jinits,self.todel)
+                self.Jfinals = np.delete(self.Jfinals,self.todel)
+                self.Jups    = np.delete(self.Jups,self.todel)
+                self.As      = np.delete(self.As,self.todel)
+                self.grates  = np.delete(self.grates,self.todel)
 
                 #Einstein A lookup table
-                Atable = collections.defaultdict(nest_defaultdict)
-                Asum = {}         
+                self.Atable = collections.defaultdict(dict)
+                self.Asum = {}         
 
-                for Q1 in Jups:
-                    Asum[Q1] = 0.0
+                for Q1 in self.Jups:
+                    self.Asum[Q1] = 0.0
                 for Q1,Q2,A12 in zip(QNU,QNL,A):
-                    try:
-                        Atable[Q1][Q2] = A12
-                        Asum[Q1] += A12
-                    except:
-                        pass
+                    #self.Atable[Q1] = {}
+                    self.Atable[Q1][Q2] = A12
+                    self.Asum[Q1] += A12
 
-                prob = []
+                self.prob = []
                 #Fraction of each Jupper going into each Jfinal
-                for Q1,Q2 in zip(Jups,Jfinals):
-                    prob.append(Atable[Q1][Q2] / Asum[Q1])
+                for Q1,Q2 in zip(self.Jups,self.Jfinals):
+                    self.prob.append(self.Atable[Q1][Q2] / self.Asum[Q1])
 
                 #Multiply by the probabilities and Einstein A's
-                gratesA = np.array(grates) * np.array(As) * np.array(prob)
-                print(self.enlevels)
-                print(Jinits)
+                self.gratesA = np.array(self.grates) * np.array(self.As) * np.array(self.prob)
                 #Sum rates with the same Jinit, Jfinal
-                for Jinit,Jfinal,grateJ in zip(Jinits,Jfinals,gratesA):
+                for Jinit,Jfinal,grateJ in zip(self.Jinits,self.Jfinals,self.gratesA):
                     if (Jinit != Jfinal):
-                        if (any(self.enlevels.J) == Jinit) and (any(self.enlevels.J == Jfinal)):
+                        if (any(self.enlevels.J == Jinit) and any(self.enlevels.J == Jfinal)):
                             try:
-                                gratesum[str(Jinit+" "+Jfinal)] += grateJ
+                                self.gratesum[str(Jinit+" "+Jfinal)] += grateJ
                             except:
-                                gratesum[str(Jinit+" "+Jfinal)] = grateJ
+                                self.gratesum[str(Jinit+" "+Jfinal)] = grateJ
             
                 vuplist.append(vup)
 
             else:
                 sys.stderr.write("Insufficient transitions to calculate pumping for this level\n")
 
-        print('grate = ....')
-        print(gratesum)
+        # print('grate = ....')
+        # print(gratesum)
 
         #Get the unique set Qinit, Qfinal and print the results. Format them so that Qinit, Qfinal correspond to their indices in the LAMDA file
-        # gratesumfinal={}
-        # QinitSum,QfinalSum = np.asarray([s.split(' ') for s in list(gratesum.keys())],dtype=str).transpose()
-        # sys.stderr.write("\nTotal effective %s pumping rates (Qi, Qf, Rate (s^-1) at 1 AU:\n" %(mol))
-        # levels_lo = []
-        # levels_up = []
+        self.gratesumfinal={}
+        QinitSum,QfinalSum = np.asarray([s.split(' ') for s in list(self.gratesum.keys())],dtype=str).transpose()
+        sys.stderr.write("\nTotal effective %s pumping rates (Qi, Qf, Rate (s^-1) at 1 AU:\n" %(mol))
+        levels_lo = []
+        levels_up = []
 
-        # for Qi,Qf in sorted(zip(QinitSum,QfinalSum)):
-        #     level_lo = self.enlevels[self.enlevels['J'].str.match(Qi)]['Level'].values[0]
-        #     level_up = self.enlevels[self.enlevels['J'].str.match(Qf)]['Level'].values[0]
-        #     levels_lo.append(level_lo)
-        #     levels_up.append(level_up)
-        #     gratesumfinal[str(level_lo)+" "+str(level_up)]=gratesum[str(Qi)+" "+str(Qf)]
-        # file_out = "g_"+str(self.mol)+"_1au.dat"
-        # f = open(file_out,"w")
-        # for Li,Lf in sorted(zip(levels_lo,levels_up)):
-        #     f.write('%s %s %s \n' %(Li,Lf,gratesumfinal[str(Li)+" "+str(Lf)]))
-        # f.close()
+        for Qi,Qf in sorted(zip(QinitSum,QfinalSum)):
+            level_lo = self.enlevels[self.enlevels['J'].str.match(Qi)]['Level'].values[0]
+            level_up = self.enlevels[self.enlevels['J'].str.match(Qf)]['Level'].values[0]
+            levels_lo.append(level_lo)
+            levels_up.append(level_up)
+            self.gratesumfinal[str(level_lo)+" "+str(level_up)]=self.gratesum[str(Qi)+" "+str(Qf)]
+        file_out = "g_"+str(self.mol)+"_1au.dat"
+        f = open(file_out,"w")
+        for Li,Lf in sorted(zip(levels_lo,levels_up)):
+            f.write('%s %s %e \n' %(Li,Lf,self.gratesumfinal[str(Li)+" "+str(Lf)]))
+        f.close()
 
 
 
