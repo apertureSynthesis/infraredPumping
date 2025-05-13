@@ -153,7 +153,7 @@ class pumpRates(object):
                 print('Creating the Einstein-A table')
                 #Einstein A lookup table
                 self.Atable = collections.defaultdict(dict)
-                self.Asum = {}         
+                self.Asum = {}   
 
                 for Q1 in self.Jups:
                     self.Asum[Q1] = 0.0
@@ -162,11 +162,13 @@ class pumpRates(object):
                     self.Atable[Q1][Q2] = A12
                     self.Asum[Q1] += A12
 
+
                 self.prob = []
                 #Fraction of each Jupper going into each Jfinal
                 for Q1,Q2 in zip(self.Jups,self.Jfinals):
                     self.prob.append(self.Atable[Q1][Q2] / self.Asum[Q1])
 
+                print(self.enlevels)
                 #Multiply by the probabilities and Einstein A's
                 self.gratesA = np.array(self.grates) * np.array(self.As) * np.array(self.prob)
                 #Sum rates with the same Jinit, Jfinal
@@ -184,7 +186,7 @@ class pumpRates(object):
                 sys.stderr.write("Insufficient transitions to calculate pumping for this level\n")
 
         # print('grate = ....')
-        # print(gratesum)
+        #print(self.gratesum)
 
         #Get the unique set Qinit, Qfinal and print the results. Format them so that Qinit, Qfinal correspond to their indices in the LAMDA file
         self.gratesumfinal={}
