@@ -161,7 +161,7 @@ def hitran_to_cdms(lower,upper,mol):
     branch_dict = {'O': -2, 'P': -1, 'Q': 0, 'R': 1, 'S': 2, 'T': 3}
 
     
-    if mol in ['HCN', 'CO', 'CS', 'HNC', 'C34S', 'C33S', 'OCS', 'HC3N']:
+    if mol in ['HCN', 'CO', 'CS', 'HNC', 'C34S', 'C33S', '13CS', 'OCS', 'HC3N']:
         """
         CDMS format is simply J. HITRAN does not populate the upper quantum numbers at all, but lists the lower quantum numbers with P, Q, R notation.
         We've already generated these into CDMS format in a previous step

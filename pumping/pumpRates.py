@@ -168,6 +168,8 @@ class pumpRates(object):
                 for Q1,Q2 in zip(self.Jups,self.Jfinals):
                     self.prob.append(self.Atable[Q1][Q2] / self.Asum[Q1])
 
+                print(self.Atable)
+
                 print(self.enlevels)
                 #Multiply by the probabilities and Einstein A's
                 self.gratesA = np.array(self.grates) * np.array(self.As) * np.array(self.prob)
@@ -186,7 +188,7 @@ class pumpRates(object):
                 sys.stderr.write("Insufficient transitions to calculate pumping for this level\n")
 
         # print('grate = ....')
-        #print(self.gratesum)
+       
 
         #Get the unique set Qinit, Qfinal and print the results. Format them so that Qinit, Qfinal correspond to their indices in the LAMDA file
         self.gratesumfinal={}
