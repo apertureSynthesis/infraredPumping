@@ -189,7 +189,7 @@ def getCDMS(mol, emax, min_frequency=0*u.GHz, max_frequency=5000*u.GHz, saveFile
         f.write("!NUMBER OF COLL PARTNERS\n")
         f.write("1                        \n")
         f.write("!COLLISIONS BETWEEN      \n")                             
-        f.write("No collision data        \n")
+        f.write("1 - No collision data    \n")
         f.write("!NUMBER OF COLL TRANS    \n")
         f.write("0                        \n")
         f.write("!NUMBER OF COLL TEMPS    \n")
