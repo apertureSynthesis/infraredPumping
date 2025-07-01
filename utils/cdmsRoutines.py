@@ -97,6 +97,12 @@ def getCDMS(mol, emax, min_frequency=0*u.GHz, max_frequency=5000*u.GHz, saveFile
         ctbl['Qup'] = ctbl.apply(lambda x: str(int(x['Ju'])), axis=1)
         ctbl['Qlo'] = ctbl.apply(lambda x: str(int(x['Jl'])), axis=1)
 
+    #CN is a special case,too. it has v=0,1 and also needs to adjust the J,F QN's to half integer
+    if mol.split()[1] == 'CN':
+        ctbl = ctbl[ctbl['Ku'] == 0]
+        ctbl['Qup'] = ctbl.apply(lambda x: str(int(x['Ju']))+'_'+str(int(x['vu'])-0.5)+'_'+str(int(x['F1u'])-0.5), axis=1)
+        ctbl['Qlo'] = ctbl.apply(lambda x: str(int(x['Jl']))+'_'+str(int(x['vl'])-0.5)+'_'+str(int(x['F1l'])-0.5), axis=1)
+
     #Generate a list of levels and statistical weights
     enlevs = {}
     gs = {}
@@ -178,7 +184,7 @@ def getCDMS(mol, emax, min_frequency=0*u.GHz, max_frequency=5000*u.GHz, saveFile
         f.write("!TRANS + UP + LOW + EINSTEINA(s^-1) + FREQ(GHz) + E_u(K)\n")
 
         tran=0
-        for l in np.arange(ntran):
+        for l in np.arange(i):
             try:
                 levels[ups[l]]
                 tran += 1

@@ -56,11 +56,11 @@ class pumpRates(object):
         else:
             self.tbl = Hitran.query_lines(molecule_number=id, isotopologue_number=iso, min_frequency=0./u.cm, max_frequency=numax).to_pandas()
 
-        #Translate the bytes to strings
-        self.tbl['global_upper_quanta']=self.tbl['global_upper_quanta'].apply(lambda x: x.decode("utf-8"))
-        self.tbl['global_lower_quanta']=self.tbl['global_lower_quanta'].apply(lambda x: x.decode("utf-8"))
-        self.tbl['local_lower_quanta']=self.tbl['local_lower_quanta'].apply(lambda x: x.decode("utf-8"))
-        self.tbl['local_upper_quanta']=self.tbl['local_upper_quanta'].apply(lambda x: x.decode("utf-8"))
+            #Translate the bytes to strings
+            self.tbl['global_upper_quanta']=self.tbl['global_upper_quanta'].apply(lambda x: x.decode("utf-8"))
+            self.tbl['global_lower_quanta']=self.tbl['global_lower_quanta'].apply(lambda x: x.decode("utf-8"))
+            self.tbl['local_lower_quanta']=self.tbl['local_lower_quanta'].apply(lambda x: x.decode("utf-8"))
+            self.tbl['local_upper_quanta']=self.tbl['local_upper_quanta'].apply(lambda x: x.decode("utf-8"))
 
         #Split off the spin species (if applicable) to save time
         self.tbl = quantumNumbers.select_species(self.tbl, self.mol)
@@ -73,8 +73,8 @@ class pumpRates(object):
 
         #Calculate statistical weights for HNC, as they aren't included in GEISA
         if self.mol == 'HNC':
-            self.tbl.loc[:,'gp'] = self.tbl['local_uppr_quanta_lamda'].apply(quantumNumbers.generate_statistical_weights)
-            self.tbl.loc[:,'gpp'] = self.tbl['local_lower_quanta_lamda'].apply(quantumNumbers.generate_statistical_weights)
+            self.tbl.loc[:,'gp'] = self.tbl['local_upper_quanta_cdms'].apply(quantumNumbers.generate_statistical_weights)
+            self.tbl.loc[:,'gpp'] = self.tbl['local_lower_quanta_cdms'].apply(quantumNumbers.generate_statistical_weights)
 
         # #Import the LAMDA data
         # collrates, radtransitions, enlevels = lamdaRoutines.query_lamda(lamdamol=lamdamol)
