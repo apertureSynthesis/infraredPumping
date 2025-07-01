@@ -91,8 +91,8 @@ def getCDMS(mol, emax, min_frequency=0*u.GHz, max_frequency=5000*u.GHz, saveFile
         print('Problems defining quanta!')
         return
 
-    #C34S and C33S are special cases where CDMS includes the v=0 and v=1 levels together
-    if (mol.split()[1] == 'C34S') or (mol.split()[1] == 'C33S') or (mol.split()[1] == 'CS') or (mol.split()[1] == '13CS'):
+    #C34S and C33S are special cases where CDMS includes the v=0 and v=1 levels together. HNC is a similar special case
+    if (mol.split()[1] == 'C34S') or (mol.split()[1] == 'C33S') or (mol.split()[1] == 'CS') or (mol.split()[1] == 'HNC'):
         ctbl = ctbl[ctbl['Ku'] == 0]
         ctbl['Qup'] = ctbl.apply(lambda x: str(int(x['Ju'])), axis=1)
         ctbl['Qlo'] = ctbl.apply(lambda x: str(int(x['Jl'])), axis=1)
