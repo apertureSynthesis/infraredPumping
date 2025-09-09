@@ -9,8 +9,6 @@ from astroquery.linelists.cdms import CDMS
 from radis.io import fetch_geisa
 import astropy.units as u
 import pandas as pd
-from scipy import constants
-import itertools
 from infraredPumping.utils import molParams
 from infraredPumping.utils import lamdaRoutines
 from infraredPumping.utils import quantumNumbers

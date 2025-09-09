@@ -142,6 +142,7 @@ def getMolParams(mol,levels='all'):
                 'id': 9,
                 'iso': 1,
                 'groundState': '          0 0 0',
+                'includeLevels': ['          0 1 0','          1 0 0','          0 0 1','          1 1 0','          0 1 1','          1 0 1'],
                 'species': None},
         '34SO2': {'cdms': '066501 34SO2',
                 'id': 9,
